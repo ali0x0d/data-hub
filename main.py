@@ -1,3 +1,4 @@
+import asyncio
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -9,8 +10,7 @@ data: dict[str, list[dict]] = {}
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    data["bitcoin"] = fetch_bitcoin()
-    data["gold"] = fetch_gold()
+    data["bitcoin"], data["gold"] = await asyncio.gather(fetch_bitcoin(), fetch_gold())
     yield
 
 

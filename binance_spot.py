@@ -1,5 +1,7 @@
 """Fetch full daily kline (candlestick) history for spot pairs from the Binance public API."""
 
+import asyncio
+
 import httpx
 
 from utils import to_date
@@ -8,13 +10,13 @@ KLINES_URL = "https://api.binance.com/api/v3/klines"
 MAX_LIMIT = 1000  # rows per request, Binance's hard cap
 
 
-def fetch_klines(symbol: str, start_ms: int = 0) -> list[dict]:
+async def fetch_klines(symbol: str, start_ms: int = 0) -> list[dict]:
     """Return every daily kline for `symbol` from `start_ms` (listing date by default) to now."""
     klines = []
 
-    with httpx.Client(timeout=30) as client:
+    async with httpx.AsyncClient(timeout=30) as client:
         while True:
-            resp = client.get(
+            resp = await client.get(
                 KLINES_URL,
                 params={
                     "symbol": symbol,
@@ -42,7 +44,7 @@ def fetch_klines(symbol: str, start_ms: int = 0) -> list[dict]:
 
 
 if __name__ == "__main__":
-    btcusdt = fetch_klines("BTCUSDT")
-    paxgusdt = fetch_klines("PAXGUSDT")
+    btcusdt = asyncio.run(fetch_klines("BTCUSDT"))
+    paxgusdt = asyncio.run(fetch_klines("PAXGUSDT"))
     print(f"BTCUSDT: {len(btcusdt)} days, {to_date(btcusdt[0]['time'])} -> {to_date(btcusdt[-1]['time'])}")
     print(f"PAXGUSDT: {len(paxgusdt)} days, {to_date(paxgusdt[0]['time'])} -> {to_date(paxgusdt[-1]['time'])}")
