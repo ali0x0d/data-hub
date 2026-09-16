@@ -8,10 +8,9 @@ KLINES_URL = "https://api.binance.com/api/v3/klines"
 MAX_LIMIT = 1000  # rows per request, Binance's hard cap
 
 
-def fetch_klines(symbol: str) -> list[dict]:
-    """Return every daily kline for `symbol`, from its listing date to now (UTC days)."""
+def fetch_klines(symbol: str, start_ms: int = 0) -> list[dict]:
+    """Return every daily kline for `symbol` from `start_ms` (listing date by default) to now."""
     klines = []
-    start_ms = 0
 
     with httpx.Client(timeout=30) as client:
         while True:
