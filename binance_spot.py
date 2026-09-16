@@ -1,8 +1,8 @@
 """Fetch full daily kline (candlestick) history for spot pairs from the Binance public API."""
 
-from datetime import UTC, date, datetime
-
 import httpx
+
+from utils import to_date
 
 KLINES_URL = "https://api.binance.com/api/v3/klines"
 MAX_LIMIT = 1000  # rows per request, Binance's hard cap
@@ -39,11 +39,6 @@ def fetch_klines(symbol: str, start_ms: int = 0) -> list[dict]:
             if len(rows) < MAX_LIMIT:
                 return klines
             start_ms = rows[-1][0] + 1
-
-
-def to_date(ms: int) -> date:
-    """Calendar date (UTC) of a Binance millisecond timestamp."""
-    return datetime.fromtimestamp(ms / 1000, UTC).date()
 
 
 if __name__ == "__main__":

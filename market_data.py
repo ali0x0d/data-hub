@@ -2,8 +2,9 @@
 
 from pathlib import Path
 
-from binance_spot import fetch_klines, to_date
+from binance_spot import fetch_klines
 from yahoo_finance import load_klines
+from utils import to_date
 
 DATA_DIR = Path(__file__).parent / "data"
 
