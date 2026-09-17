@@ -1,11 +1,23 @@
 import asyncio
+import os
+import secrets
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from market_data import compute_btcxau, fetch_btc, fetch_xau, sync
 
+API_TOKEN = os.environ["API_TOKEN"]
+
+bearer = HTTPBearer()
+
 data: dict[str, list[dict]] = {}
+
+
+def require_token(credentials: HTTPAuthorizationCredentials = Depends(bearer)) -> None:
+    if not secrets.compare_digest(credentials.credentials, API_TOKEN):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "invalid token")
 
 
 @asynccontextmanager
@@ -17,7 +29,7 @@ async def lifespan(app: FastAPI):
     task.cancel()
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(lifespan=lifespan, dependencies=[Depends(require_token)])
 
 
 @app.get("/btc")
