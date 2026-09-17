@@ -8,7 +8,7 @@ import httpx
 
 from binance_spot import fetch_klines
 from yahoo_finance import load_klines
-from utils import to_date
+from utils import fill_missing_days, to_date
 
 DATA_DIR = Path(__file__).parent / "data"
 SYNC_INTERVAL = 5  # seconds
@@ -27,7 +27,7 @@ async def fetch_xau() -> list[dict]:
     """GC=F gold futures from Yahoo (2000-08-30) until Binance lists PAXGUSDT (2020-08-28), then Binance."""
     binance = await fetch_klines("PAXGUSDT")
     yahoo = load_klines(DATA_DIR / "gold_gc_f_daily.csv", until_ms=binance[0]["time"])
-    return yahoo + binance
+    return fill_missing_days(yahoo + binance)
 
 
 async def sync(btc: list[dict], xau: list[dict]) -> None:
