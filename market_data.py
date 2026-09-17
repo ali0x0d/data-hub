@@ -8,7 +8,7 @@ import httpx
 
 from binance_spot import fetch_klines
 from yahoo_finance import load_klines
-from utils import fill_missing_days, to_date
+from utils import DAY_MS, fill_missing_days, to_date
 
 DATA_DIR = Path(__file__).parent / "data"
 SYNC_INTERVAL = 5  # seconds
@@ -30,8 +30,27 @@ async def fetch_xau() -> list[dict]:
     return fill_missing_days(yahoo + binance)
 
 
-async def sync(btc: list[dict], xau: list[dict]) -> None:
-    """Keep btc and xau up to date with Binance, polling every SYNC_INTERVAL seconds."""
+def compute_btcxau(btc: list[dict], xau: list[dict]) -> list[dict]:
+    """Bitcoin priced in gold, bar by bar; both series must be gapless and end on the same day.
+    Open and close are exact; high and low are the extremes of the four ratios, since the true
+    intraday range can't be known from daily bars."""
+    btcxau = []
+    for b, x in zip(btc, xau[-len(btc):]):
+        ratio = {k: b[k] / x[k] for k in ("open", "high", "low", "close")}
+        btcxau.append(
+            {
+                "time": b["time"],
+                "open": ratio["open"],
+                "high": max(ratio.values()),
+                "low": min(ratio.values()),
+                "close": ratio["close"],
+            }
+        )
+    return btcxau
+
+
+async def sync(btc: list[dict], xau: list[dict], btcxau: list[dict]) -> None:
+    """Keep btc, xau and their ratio up to date with Binance, polling every SYNC_INTERVAL seconds."""
     while True:
         await asyncio.sleep(SYNC_INTERVAL)
         try:
@@ -46,6 +65,9 @@ async def sync(btc: list[dict], xau: list[dict]) -> None:
             btc[-1:] = fresh_btc
         if fresh_xau:
             xau[-1:] = fresh_xau
+        if xau[-1]["time"] == btc[-1]["time"]:  # PAXG's new day can show up a poll after BTCUSDT's
+            k = (btc[-1]["time"] - btcxau[-1]["time"]) // DAY_MS + 1  # 1, or 2 right after midnight UTC
+            btcxau[-1:] = compute_btcxau(btc[-k:], xau[-k:])
 
 
 if __name__ == "__main__":
