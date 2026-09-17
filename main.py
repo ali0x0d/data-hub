@@ -3,14 +3,14 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from market_data import fetch_bitcoin, fetch_gold, sync
+from market_data import fetch_btc, fetch_xau, sync
 
 data: dict[str, list[dict]] = {}
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    data["btc"], data["xau"] = await asyncio.gather(fetch_bitcoin(), fetch_gold())
+    data["btc"], data["xau"] = await asyncio.gather(fetch_btc(), fetch_xau())
     task = asyncio.create_task(sync(data["btc"], data["xau"]))
     yield
     task.cancel()
