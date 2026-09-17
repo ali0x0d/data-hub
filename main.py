@@ -10,8 +10,8 @@ data: dict[str, list[dict]] = {}
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    data["bitcoin"], data["gold"] = await asyncio.gather(fetch_bitcoin(), fetch_gold())
-    task = asyncio.create_task(sync(data["bitcoin"], data["gold"]))
+    data["btc"], data["xau"] = await asyncio.gather(fetch_bitcoin(), fetch_gold())
+    task = asyncio.create_task(sync(data["btc"], data["xau"]))
     yield
     task.cancel()
 
@@ -19,11 +19,11 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 
-@app.get("/bitcoin")
-def bitcoin() -> list[dict]:
-    return data["bitcoin"]
+@app.get("/btc")
+def btc() -> list[dict]:
+    return data["btc"]
 
 
-@app.get("/gold")
-def gold() -> list[dict]:
-    return data["gold"]
+@app.get("/xau")
+def xau() -> list[dict]:
+    return data["xau"]
