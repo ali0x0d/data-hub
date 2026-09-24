@@ -9,6 +9,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from market_data import compute_btcxau, fetch_btc, fetch_xau, sync
 
 API_TOKEN = os.environ["API_TOKEN"]
+DEV_MODE = os.environ.get("FASTAPI_ENV") == "development"  # set by `fastapi dev`, not by `fastapi run`
 
 bearer = HTTPBearer()
 
@@ -29,7 +30,11 @@ async def lifespan(app: FastAPI):
     task.cancel()
 
 
-app = FastAPI(lifespan=lifespan, dependencies=[Depends(require_token)])
+app = FastAPI(
+    lifespan=lifespan,
+    dependencies=[Depends(require_token)],
+    openapi_url="/openapi.json" if DEV_MODE else None,  # None also removes /docs and /redoc
+)
 
 
 @app.get("/btc")
