@@ -69,7 +69,7 @@ API_TOKEN=your-token-here
 Then start the dev server:
 
 ```bash
-uv run fastapi dev main.py
+uv run --env-file .env fastapi dev main.py
 ```
 
 It listens on `http://127.0.0.1:8000` and takes a few seconds to come up while it pulls the full
