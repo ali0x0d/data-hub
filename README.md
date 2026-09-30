@@ -8,7 +8,8 @@ into memory at startup and the last bar is kept fresh by polling Binance every 5
 
 ## Endpoints
 
-All endpoints require a bearer token and return a JSON array of daily bars, oldest first.
+All endpoints require a bearer token and return a JSON array of daily bars, oldest first. A page calling
+from a browser also needs its origin listed in `ALLOWED_ORIGINS`.
 
 | Endpoint  | Series                    | Starts at  | Sources                                          |
 | --------- | ------------------------- | ---------- | ------------------------------------------------ |
@@ -60,10 +61,13 @@ uv sync
 cp .env.example .env
 ```
 
-Put a token in `.env`; anything unguessable works, for example `openssl rand -hex 32`:
+Put a token in `.env`; anything unguessable works, for example `openssl rand -hex 32`. `ALLOWED_ORIGINS`
+is a comma separated list of the origins allowed to call the API from a browser — use the ones your
+frontend is served from:
 
 ```
 API_TOKEN=your-token-here
+ALLOWED_ORIGINS=http://localhost:5173,https://charts.example.com
 ```
 
 Then start the dev server:
@@ -147,9 +151,13 @@ container reads:
 
 ```bash
 sudo install -d -o data-hub -g data-hub /opt/data-hub
-printf 'API_TOKEN=%s\n' "$(openssl rand -hex 32)" | sudo -u data-hub tee /opt/data-hub/.env >/dev/null
+printf 'API_TOKEN=%s\nALLOWED_ORIGINS=\n' "$(openssl rand -hex 32)" \
+  | sudo -u data-hub tee /opt/data-hub/.env >/dev/null
 sudo chmod 600 /opt/data-hub/.env
 ```
+
+That leaves `ALLOWED_ORIGINS` empty, which allows no browser at all; fill in the origins your frontend is
+served from.
 
 `compose.yaml` reads `/opt/data-hub/.env` at startup, and the deploy job never touches that file. The
 token lives only on the server.
